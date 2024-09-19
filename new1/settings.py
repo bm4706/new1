@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     
     # 추가 앱
     "users",
+    "boards",
     
     # 추가 라이브러리
     'rest_framework',
@@ -135,3 +136,20 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # settings.py
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / "media"
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=720),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    # "AUTH_HEADER_TYPES": ("Bearer",),
+    # "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    # "USER_ID_FIELD": "id",
+    # "USER_ID_CLAIM": "user_id",
+    # "TOKEN_OBTAIN_SERIALIZER": "users.serializers.CustomTokenObtainPairSerializer",
+    # "ROTATE_REFRESH_TOKENS": False,
+    # "BLACKLIST_AFTER_ROTATION": False,
+    # "UPDATE_LAST_LOGIN": False,
+    # 'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+}
