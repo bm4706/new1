@@ -1,6 +1,10 @@
 
 from datetime import timedelta
 from pathlib import Path
+from decouple import config
+import os
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,6 +36,7 @@ INSTALLED_APPS = [
     # 추가 앱
     "users",
     "boards",
+    "riot_api",
     
     # 추가 라이브러리
     'rest_framework',
@@ -64,7 +69,8 @@ ROOT_URLCONF = "new1.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        # "DIRS": [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -153,3 +159,6 @@ SIMPLE_JWT = {
     # "UPDATE_LAST_LOGIN": False,
     # 'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
 }
+
+
+RIOT_API_KEY = config('RIOT_API_KEY')

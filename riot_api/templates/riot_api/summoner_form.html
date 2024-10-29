@@ -1,0 +1,6 @@
+<h1>소환사 조회</h1>
+<form method="get">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">조회</button>
+</form>
