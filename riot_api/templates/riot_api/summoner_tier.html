@@ -1,25 +1,139 @@
-<h1>{{ game_name }}님의 티어 정보</h1>
+<!-- <h1>{{ game_name }}님의 티어 정보</h1>
 
 <h2>소환사 정보</h2>
 <ul>
     <li>소환사명: {{ game_name }}#{{ tag_line }}</li>
     <li>소환사 레벨: {{ summoner_info.summonerLevel }}</li>
-    <!-- <li>프로필 아이콘 ID: {{ summoner_info.profileIconId }}</li> -->
 </ul>
 
 <h2>티어 정보</h2>
-{% if league_entries %}
+{% if tier_info %}
     <ul>
-    {% for entry in league_entries %}
-        <li>
-            큐 타입: {{ entry.queueType }}<br>
-            티어: {{ entry.tier }} {{ entry.rank }}<br>
-            LP: {{ entry.leaguePoints }}<br>
-            승리: {{ entry.wins }} | 패배: {{ entry.losses }}
-        </li>
-        <hr>
-    {% endfor %}
+        <li>티어: {{ tier_info.tier }} {{ tier_info.rank }}</li>
+        <li>LP: {{ tier_info.leaguePoints }}</li>
+        <li>승리: {{ tier_info.wins }}</li>
+        <li>패배: {{ tier_info.losses }}</li>
     </ul>
 {% else %}
-    <p>티어 정보를 찾을 수 없습니다.</p>
+    <p>티어 정보를 가져올 수 없습니다.</p>
 {% endif %}
+
+
+<button id="save-button">티어 정보 저장</button>
+
+<div id="modal" style="display: none;">
+    <form id="save-form" method="post" action="{% url 'save_streamer_tier' %}">
+        {% csrf_token %}
+        {{ streamer_form.as_p }}
+        <button type="submit">저장</button>
+        <button type="button" id="close-button">닫기</button>
+    </form>
+</div>
+
+<script>
+document.getElementById('save-button').addEventListener('click', function() {
+    document.getElementById('modal').style.display = 'block';
+});
+
+document.getElementById('close-button').addEventListener('click', function() {
+    document.getElementById('modal').style.display = 'none';
+});
+</script> -->
+
+
+<!-- riot_api/templates/riot_api/summoner_tier.html -->
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ game_name }}님의 티어 정보</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    {% load static %}
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4 text-center">{{ game_name }}님의 티어 정보</h1>
+
+        <!-- 소환사 정보 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                소환사 정보
+            </div>
+            <div class="card-body">
+                <p class="card-text">소환사명: {{ game_name }}#{{ tag_line }}</p>
+                <p class="card-text">소환사 레벨: {{ summoner_info.summonerLevel }}</p>
+            </div>
+        </div>
+
+        <!-- 티어 정보 -->
+        {% if tier_info %}
+        <div class="card mb-4">
+            <div class="card-header">
+                티어 정보
+            </div>
+            <div class="card-body">
+                <h3 class="card-title">
+                    <img src="{% static 'images/tiers/{{ tier_info.tier|lower }}.png' %}" alt="{{ tier_info.tier }}" width="32" height="32">
+                    {{ tier_info.tier }} {{ tier_info.rank }}
+                </h3>
+                <p class="card-text">LP: {{ tier_info.leaguePoints }}</p>
+                <p class="card-text">승리: {{ tier_info.wins }}</p>
+                <p class="card-text">패배: {{ tier_info.losses }}</p>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning" role="alert">
+            티어 정보를 가져올 수 없습니다.
+        </div>
+        {% endif %}
+
+        <!-- 티어 정보 저장 버튼 -->
+        <button id="save-button" class="btn btn-success">티어 정보 저장</button>
+
+        <!-- 모달 폼 -->
+        <div id="modal" class="modal" tabindex="-1" role="dialog" style="display: none;">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <form id="save-form" method="post" action="{% url 'save_streamer_tier' %}">
+                  {% csrf_token %}
+                  <div class="modal-header">
+                    <h5 class="modal-title">스트리머 닉네임 입력</h5>
+                    <button type="button" class="close" id="close-button" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                      {{ streamer_form.as_p }}
+                  </div>
+                  <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">저장</button>
+                    <button type="button" class="btn btn-secondary" id="close-button-footer">닫기</button>
+                  </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+    </div>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+    document.getElementById('save-button').addEventListener('click', function() {
+        $('#modal').modal('show');
+    });
+
+    document.getElementById('close-button').addEventListener('click', function() {
+        $('#modal').modal('hide');
+    });
+
+    document.getElementById('close-button-footer').addEventListener('click', function() {
+        $('#modal').modal('hide');
+    });
+    </script>
+</body>
+</html>
