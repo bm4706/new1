@@ -7,12 +7,11 @@ class UserManager(BaseUserManager):
     ''' 사용자 모델을 생성하고 관리하는 클래스 입니다.'''
 
 
-    def create_user(self, email, password, nickname):
+    def create_user(self, email, nickname, password=None, user_img=None, **extra_fields):
         if not email:
-            raise ValueError("유효하지 않은 이메일 형식입니다.")
-        
+            raise ValueError("이메일 주소는 필수 항목입니다.")
         email = self.normalize_email(email)
-        user = self.model(email=email, nickname=nickname)
+        user = self.model(email=email, nickname=nickname, user_img=user_img, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -43,7 +42,7 @@ class User(AbstractBaseUser,PermissionsMixin):
     is_admin = models.BooleanField('관리자 권한 여부', default=False)
     is_active = models.BooleanField('계정 활성화 여부', default=True)
     is_staff = models.BooleanField('스태브 여부', default=False)
-    user_img = models.ImageField('프로필 이미지', upload_to='user/user_img/%Y/%m/%D', default='user_defalt.jpg')
+    user_img = models.ImageField('프로필 이미지', upload_to='user/user_img/%Y/%m/%D', default='user_defalt.jpg',blank=True,null=True)
     following = models.ManyToManyField('self', verbose_name='팔로잉', related_name='followers',symmetrical=False, blank=True)
     is_email_verified = models.BooleanField('이메일 검증 여부', default=False)
     social_id = models.CharField('소셜 아이디', max_length=30, blank=True, null=True)

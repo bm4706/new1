@@ -1,5 +1,5 @@
 import jwt
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -11,9 +11,13 @@ from users.serializers import UserSerializer
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from .serializers import UserSerializer
 from new1.settings import SECRET_KEY
+from django.views import View
+from django.contrib import messages
+from .forms import RegisterForm
 
 # 회원가입 클래스
-class SignupView(APIView):
+
+class SignupAPIView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
@@ -117,4 +121,66 @@ class AuthApiView(APIView):
             }, status=status.HTTP_202_ACCEPTED)
         response.delete_cookie("access")
         response.delete_cookie("refresh")
+        return response
+    
+    
+    
+class LoginView(View):
+    def get(self, request):
+        return render(request, 'users/login.html')
+
+    def post(self, request):
+        # 폼에서 전송된 데이터 가져오기
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+
+        # 유저 인증
+        user = authenticate(email=email, password=password)
+
+        if user is not None:
+            # JWT 토큰 생성
+            token = TokenObtainPairSerializer.get_token(user)
+            refresh_token = str(token)
+            access_token = str(token.access_token)
+
+            # 응답 생성
+            res = redirect('post-list-create')  # 로그인 후 리디렉션할 페이지
+            res.set_cookie("access", access_token, httponly=True)
+            res.set_cookie("refresh", refresh_token, httponly=True)
+
+            # 성공 메시지 추가 (선택 사항)
+            messages.success(request, '로그인에 성공하였습니다.')
+
+            return res
+        else:
+            # 에러 메시지 추가 (선택 사항)
+            messages.error(request, '이메일 또는 비밀번호가 올바르지 않습니다.')
+            return render(request, 'users/login.html')
+        
+        
+
+class SignupView(View):
+    def get(self, request):
+        form = RegisterForm()
+        return render(request, 'users/signup.html', {'form': form})
+
+    def post(self, request):
+        form = RegisterForm(request.POST, request.FILES)  # 이미지 파일 포함
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data['password'])
+            user.save()
+            messages.success(request, '회원가입에 성공하였습니다.')
+            return redirect('login')
+        else:
+            messages.error(request, '회원가입에 실패하였습니다.')
+            return render(request, 'users/signup.html', {'form': form})
+
+
+class LogoutView(View):
+    def post(self, request):
+        response = redirect('post-list-create')
+        response.delete_cookie('access')
+        response.delete_cookie('refresh')
+        messages.success(request, '로그아웃되었습니다.')
         return response
