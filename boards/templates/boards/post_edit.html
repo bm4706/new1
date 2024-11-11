@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>게시글 수정</title>
+</head>
+<body>
+    <h1>게시글 수정하기</h1>
+
+    <!-- 수정 성공 및 오류 메시지 표시 -->
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <!-- 수정 폼 -->
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="title">제목:</label>
+        <input type="text" name="title" id="title" value="{{ form.title.value }}" required><br><br>
+
+        <label for="content">내용:</label>
+        <textarea name="content" id="content" required>{{ form.content.value }}</textarea><br><br>
+
+        <!-- 이미지 필드 (선택 사항) -->
+        <label for="image">이미지:</label>
+        <input type="file" name="image" id="image"><br><br>
+
+        <button type="submit">수정하기</button>
+    </form>
+
+    <a href="{% url 'post-detail' post.pk %}">게시글로 돌아가기</a>
+</body>
+</html>

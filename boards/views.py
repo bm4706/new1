@@ -13,6 +13,7 @@ from rest_framework.exceptions import PermissionDenied, NotFound
 
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import Post
 from .forms import PostForm
@@ -91,7 +92,6 @@ class ArticleDetailView(APIView):
 
 
 ### html 기반
-@method_decorator(login_required, name='dispatch')
 class PostView(View):
     def get(self, request, pk=None):
         if pk:
@@ -103,37 +103,55 @@ class PostView(View):
             posts = Post.objects.all().order_by('-created_at')
             return render(request, 'boards/post_list.html', {'posts': posts})
 
-    def post(self, request, pk=None):
-        if pk:
-            # 게시글 수정
-            post = get_object_or_404(Post, pk=pk)
-            if post.author != request.user:
-                return HttpResponseForbidden("수정 권한이 없습니다.")
-            form = PostForm(request.POST, instance=post)
-            if form.is_valid():
-                form.save()
-                return redirect('post-detail', pk=post.pk)
-        else:
-            # 게시글 생성
-            form = PostForm(request.POST)
-            if form.is_valid():
-                post = form.save(commit=False)
-                post.author = request.user
-                post.save()
-                # 포인트 증가
-                request.user.point += 5
-                request.user.save()
-                return redirect('post-detail', pk=post.pk)
+@method_decorator(login_required, name='dispatch')
+class PostCreateView(View):
+    def get(self, request):
         form = PostForm()
-        return render(request, 'boards/post_form.html', {'form': form})
+        return render(request, 'boards/post_create.html', {'form': form})
 
-    def delete(self, request, pk):
-        # 게시글 삭제
+    def post(self, request):
+        form = PostForm(request.POST, request.FILES)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.author = request.user  # 로그인된 사용자를 작성자로 설정
+            post.save()
+            
+            # 포인트 증가
+            request.user.point += 5
+            request.user.save()
+            
+            return redirect('post-detail', pk=post.pk)  # 작성된 게시글로 리디렉션
+        return render(request, 'boards/post_create.html', {'form': form})
+
+@method_decorator(login_required, name='dispatch')
+class PostEditView(View):
+    def get(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        if post.author != request.user:
+            return HttpResponseForbidden("수정 권한이 없습니다.")
+        
+        form = PostForm(instance=post)
+        return render(request, 'boards/post_edit.html', {'form': form, 'post': post})  # post를 컨텍스트에 추가
+
+    def post(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        if post.author != request.user:
+            return HttpResponseForbidden("수정 권한이 없습니다.")
+
+        form = PostForm(request.POST, request.FILES, instance=post)
+        if form.is_valid():
+            form.save()
+            messages.success(request, '게시글이 성공적으로 수정되었습니다.')
+            return redirect('post-detail', pk=post.pk)  # pk 값을 명확히 전달
+        return render(request, 'boards/post_edit.html', {'form': form, 'post': post})
+
+@method_decorator(login_required, name='dispatch')
+class PostDeleteView(View):
+    def post(self, request, pk):
         post = get_object_or_404(Post, pk=pk)
         if post.author != request.user:
             return HttpResponseForbidden("삭제 권한이 없습니다.")
         post.delete()
-        # 포인트 감소
         request.user.point -= 5
         request.user.save()
         return redirect('post-list-create')

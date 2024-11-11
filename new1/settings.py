@@ -65,7 +65,12 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "new1.urls"
-
+# 로그인과 로그아웃 리디렉션 설정
+LOGIN_URL = '/users/login/'                # 로그인 URL을 /login/으로 설정
+LOGOUT_REDIRECT_URL = '/boards/'      # 로그아웃 후 이동할 URL을 /boards/로 설정
+SESSION_COOKIE_SECURE = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 브라우저 종료 시 세션 만료
+# SESSION_COOKIE_AGE = 10
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",

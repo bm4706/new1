@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>게시글 작성하기</title>
+</head>
+<body>
+    <h1>게시글 작성하기</h1>
+
+    <!-- 작성 폼 -->
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}  <!-- 전체 폼을 출력하여 placeholder 설정이 적용됨 -->
+
+        <button type="submit">게시글 작성</button>
+    </form>
+
+    <a href="{% url 'post-list-create' %}">목록으로 돌아가기</a>
+</body>
+</html>

@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 # from django.contrib.auth.models import User
 from users.models import User
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login, logout
 from rest_framework_simplejwt.tokens import RefreshToken
 from users.serializers import UserSerializer
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
@@ -138,22 +138,10 @@ class LoginView(View):
         user = authenticate(email=email, password=password)
 
         if user is not None:
-            # JWT 토큰 생성
-            token = TokenObtainPairSerializer.get_token(user)
-            refresh_token = str(token)
-            access_token = str(token.access_token)
-
-            # 응답 생성
-            res = redirect('post-list-create')  # 로그인 후 리디렉션할 페이지
-            res.set_cookie("access", access_token, httponly=True)
-            res.set_cookie("refresh", refresh_token, httponly=True)
-
-            # 성공 메시지 추가 (선택 사항)
+            login(request, user)  # 로그인 세션 생성
             messages.success(request, '로그인에 성공하였습니다.')
-
-            return res
+            return redirect('post-list-create')
         else:
-            # 에러 메시지 추가 (선택 사항)
             messages.error(request, '이메일 또는 비밀번호가 올바르지 않습니다.')
             return render(request, 'users/login.html')
         
@@ -179,8 +167,6 @@ class SignupView(View):
 
 class LogoutView(View):
     def post(self, request):
-        response = redirect('post-list-create')
-        response.delete_cookie('access')
-        response.delete_cookie('refresh')
+        logout(request)  # 사용자 로그아웃
         messages.success(request, '로그아웃되었습니다.')
-        return response
+        return redirect('post-list-create') 

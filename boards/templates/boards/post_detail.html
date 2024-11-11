@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ post.title }}</title>
+    <style>
+        /* 버튼 스타일 */
+        .button {
+            display: inline-block;
+            padding: 8px 12px;
+            margin: 5px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .button-delete {
+            background-color: #dc3545;
+        }
+        .button-delete:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ post.title }}</h1>
+    <p>작성자: {% if post.author %}{{ post.author.nickname }}{% else %}탈퇴한 사용자{% endif %}</p>
+    <p>작성일: {{ post.created_at }}</p>
+    <p>내용:</p>
+    <p>{{ post.content }}</p>
+
+    <!-- 이미지 출력 -->
+    {% if post.image %}
+        <div>
+            <img src="{{ post.image.url }}" alt="게시글 이미지" style="max-width: 100%; height: auto;">
+        </div>
+    {% endif %}
+
+    <!-- 수정 및 삭제 버튼 (현재 로그인한 사용자가 작성자인 경우에만 표시) -->
+    {% if user.is_authenticated and post.author == user %}
+        <a href="{% url 'post-edit' post.pk %}" class="button">수정</a>
+        
+        <!-- 삭제 버튼을 POST 요청으로 전송 -->
+        <form action="{% url 'post-delete' post.pk %}" method="post" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="button button-delete">삭제</button>
+        </form>
+    {% endif %}
+
+    <!-- 목록으로 돌아가기 버튼 -->
+    <a href="{% url 'post-list-create' %}" class="button">목록으로 돌아가기</a>
+</body>
+</html>
