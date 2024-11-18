@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>마이페이지</title>
+</head>
+<body>
+    <h1>{{ user.nickname }}님의 프로필</h1>
+    <!-- 리스트로 돌아가는 버튼 -->
+    <a href="{% url 'post-list-create' %}">
+        <button style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 20px;">
+            리스트로 돌아가기
+        </button>
+    </a>
+    
+    <!-- 프로필 이미지 -->
+    <div>
+        {% if user.user_img %}
+            <img src="{{ user.user_img.url }}" alt="프로필 이미지" style="max-width: 150px; height: auto;">
+        {% else %}
+            <p>프로필 이미지가 없습니다.</p>
+        {% endif %}
+    </div>
+    
+    <!-- 프로필 정보 -->
+    <p><strong>이메일:</strong> {{ user.email }}</p>
+    <p><strong>닉네임:</strong> {{ user.nickname }}</p>
+    <p><strong>포인트:</strong> {{ user.point }}</p>
+    <h2>내가 작성한 글</h2>
+    <ul>
+        {% for post in post_page %}
+            <li>
+                <a href="{% url 'post-detail' post.pk %}">{{ post.title }}</a>  <!-- 글 제목 클릭 시 해당 글로 이동 -->
+            </li>
+        {% empty %}
+            <li>작성한 글이 없습니다.</li>
+        {% endfor %}
+    </ul>
+    <div>
+        {% if post_page.has_previous %}
+            <a href="?post_page={{ post_page.previous_page_number }}">&laquo; 이전</a>
+        {% endif %}
+        <span>{{ post_page.number }} / {{ post_page.paginator.num_pages }}</span>
+        {% if post_page.has_next %}
+            <a href="?post_page={{ post_page.next_page_number }}">다음 &raquo;</a>
+        {% endif %}
+    </div>
+
+    <h2>내가 작성한 댓글</h2>
+    <ul>
+        {% for comment in comment_page %}
+            <li>
+                <a href="{% url 'post-detail' comment.post.pk %}">[{{ comment.post.title }}] 댓글</a>  <!-- 댓글 제목 클릭 시 해당 글로 이동 -->
+            </li>
+        {% empty %}
+            <li>작성한 댓글이 없습니다.</li>
+        {% endfor %}
+    </ul>
+    <div>
+        {% if comment_page.has_previous %}
+            <a href="?comment_page={{ comment_page.previous_page_number }}">&laquo; 이전</a>
+        {% endif %}
+        <span>{{ comment_page.number }} / {{ comment_page.paginator.num_pages }}</span>
+        {% if comment_page.has_next %}
+            <a href="?comment_page={{ comment_page.next_page_number }}">다음 &raquo;</a>
+        {% endif %}
+    </div>
+
+    <!-- 프로필 수정 링크 (선택 사항) -->
+    <a href="{% url 'profile-edit' %}">프로필 수정</a>
+</body>
+</html>

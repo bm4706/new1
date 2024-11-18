@@ -15,8 +15,8 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Post
-from .forms import PostForm
+from .models import Post, Comment
+from .forms import PostForm, CommentForm
 
 ### apiview 기반
 class ArticleView(APIView):
@@ -96,12 +96,33 @@ class PostView(View):
     def get(self, request, pk=None):
         if pk:
             # 게시글 상세 조회
-            post = get_object_or_404(Post, pk=pk)
-            return render(request, 'boards/post_detail.html', {'post': post})
+            post = get_object_or_404(Post, pk=pk)            
+            comments = post.comments.all()  # 해당 게시글의 모든 댓글
+            form = CommentForm()
+            return render(request, 'boards/post_detail.html', {'post': post, 'comments': comments, 'form': form})
         else:
             # 게시글 목록 조회
             posts = Post.objects.all().order_by('-created_at')
             return render(request, 'boards/post_list.html', {'posts': posts})
+
+        
+    # 댓글 작성    
+    def post(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.author = request.user  # 현재 로그인한 사용자를 작성자로 설정
+            comment.post = post  # 댓글이 달린 게시글 설정
+            comment.save()
+            
+            # 포인트 추가
+            request.user.point += 1
+            request.user.save()
+            
+            return redirect('post-detail', pk=post.pk)
+        comments = post.comments.all()
+        return render(request, 'boards/post_detail.html', {'post': post, 'comments': comments, 'form': form})
 
 @method_decorator(login_required, name='dispatch')
 class PostCreateView(View):
@@ -157,3 +178,18 @@ class PostDeleteView(View):
         return redirect('post-list-create')
 
 
+class CommentDeleteView(View):
+    def post(self, request, pk):
+        comment = get_object_or_404(Comment, pk=pk)
+        
+        # 댓글 작성자만 삭제 가능
+        if comment.author != request.user:
+            return HttpResponseForbidden("삭제 권한이 없습니다.")
+        
+        comment.delete()
+        
+        # 포인트 차감
+        request.user.point -= 1
+        request.user.save()
+        
+        return redirect('post-detail', pk=comment.post.pk)

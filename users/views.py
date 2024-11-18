@@ -13,7 +13,13 @@ from .serializers import UserSerializer
 from new1.settings import SECRET_KEY
 from django.views import View
 from django.contrib import messages
-from .forms import RegisterForm
+from .forms import RegisterForm, ProfileForm
+
+
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
+from boards.models import Post, Comment 
+from django.core.paginator import Paginator
 
 # 회원가입 클래스
 
@@ -170,3 +176,46 @@ class LogoutView(View):
         logout(request)  # 사용자 로그아웃
         messages.success(request, '로그아웃되었습니다.')
         return redirect('post-list-create') 
+    
+    
+    
+@method_decorator(login_required, name='dispatch')
+class ProfileView(View):
+    def get(self, request):
+        # 사용자가 작성한 글 가져오기
+        user_posts = Post.objects.filter(author=request.user).order_by('-created_at')
+        post_paginator = Paginator(user_posts, 10)  # 10개씩 페이지네이션
+        post_page_number = request.GET.get('post_page')
+        post_page = post_paginator.get_page(post_page_number)
+
+        # 사용자가 작성한 댓글 가져오기
+        user_comments = Comment.objects.filter(author=request.user).order_by('-created_at')
+        comment_paginator = Paginator(user_comments, 10)  # 10개씩 페이지네이션
+        comment_page_number = request.GET.get('comment_page')
+        comment_page = comment_paginator.get_page(comment_page_number)
+
+        return render(request, 'users/profile.html', {
+            'post_page': post_page,
+            'comment_page': comment_page,
+        })
+    
+@method_decorator(login_required, name='dispatch')
+class ProfileEditView(View):
+    def get(self, request):
+        form = ProfileForm(instance=request.user)
+        return render(request, 'users/profile_edit.html', {'form': form})
+
+    def post(self, request):
+        form = ProfileForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            user = form.save(commit=False)  # 데이터베이스 저장 전 임시 저장
+            # 닉네임이나 이미지를 변경하지 않은 경우 기존 값을 유지
+            if not form.cleaned_data.get('user_img'):  # 이미지가 없으면
+                user.user_img = request.user.user_img  # 기존 이미지 유지
+            if not form.cleaned_data.get('nickname'):  # 닉네임이 없으면
+                user.nickname = request.user.nickname  # 기존 닉네임 유지
+            user.save()  # 변경 사항 저장
+            return redirect('profile')
+        
+        # 폼 유효성 검사 실패 시 오류 메시지 표시
+        return render(request, 'users/profile_edit.html', {'form': form, 'errors': form.errors})

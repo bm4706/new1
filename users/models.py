@@ -53,7 +53,17 @@ class User(AbstractBaseUser,PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['nickname']
 
+    def save(self, *args, **kwargs):
+        # 기존 이미지가 있으면 삭제
+        if self.pk:
+            try:
+                old_user = User.objects.get(pk=self.pk)
+                if old_user.user_img and old_user.user_img != self.user_img:
+                    old_user.user_img.delete(save=False)
+            except User.DoesNotExist:
+                pass  # 새 객체인 경우 무시합니다
 
+        super().save(*args, **kwargs)  # 부모 클래스의 save 메서드 호출
 
 
 

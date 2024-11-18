@@ -1,6 +1,7 @@
 from django import forms
 from .models import User
 from django.core.exceptions import ValidationError
+from django.forms.widgets import ClearableFileInput
 
 class RegisterForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput, label='비밀번호')
@@ -30,3 +31,15 @@ class RegisterForm(forms.ModelForm):
         if password != password2:
             self.add_error('password2', "비밀번호가 일치하지 않습니다.")
         return cleaned_data
+
+class CustomClearableFileInput(ClearableFileInput):
+    clear_checkbox_label = "이미지 제거"
+    initial_text = ""
+    input_text = "이미지 변경"
+
+class ProfileForm(forms.ModelForm):
+    user_img = forms.ImageField(widget=CustomClearableFileInput, required=False, label='')
+
+    class Meta:
+        model = User
+        fields = ['nickname', 'user_img']
