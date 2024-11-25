@@ -12,6 +12,7 @@ from .models import StreamerTier
 from django.core.paginator import Paginator
 from django.core.cache import cache
 from django.contrib.auth.decorators import login_required
+from django.db.models import F, ExpressionWrapper, FloatField
 
 @csrf_exempt
 def summoner_tier_view(request):
@@ -119,20 +120,39 @@ def save_streamer_tier(request):
 
 def streamer_tier_list(request):
     query = request.GET.get('q')
+    sort_order = request.GET.get('sort', 'alphabetical')  # 기본 정렬 기준은 알파벳순
+
     if query:
         streamer_tiers = StreamerTier.objects.filter(streamer_name__icontains=query)
     else:
         streamer_tiers = StreamerTier.objects.all()
-    
+
     # 승률 계산 후 객체에 추가
-    for tier in streamer_tiers:
-        total_games = tier.wins + tier.losses
-        tier.win_rate = (tier.wins / total_games * 100) if total_games > 0 else 0
+    streamer_tiers = streamer_tiers.annotate(
+        win_rate=ExpressionWrapper(
+            F('wins') * 100 / (F('wins') + F('losses')),
+            output_field=FloatField()
+        )
+    )
+
+    # 정렬 기준 적용
+    if sort_order == 'tier_desc':
+        streamer_tiers = sorted(streamer_tiers, key=lambda x: (x.tier_priority, -x.league_points), reverse=True)
+    elif sort_order == 'tier_asc':
+        streamer_tiers = sorted(streamer_tiers, key=lambda x: (x.tier_priority, x.league_points))
+    elif sort_order == 'alphabetical':
+        streamer_tiers = streamer_tiers.order_by('streamer_name')
 
     paginator = Paginator(streamer_tiers, 10)  # 페이지당 10개
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    return render(request, 'riot_api/streamer_tier_list.html', {'page_obj': page_obj, 'is_superuser': request.user.is_superuser})
+
+    return render(request, 'riot_api/streamer_tier_list.html', {
+        'page_obj': page_obj,
+        'is_superuser': request.user.is_superuser,
+        'sort_order': sort_order,  # 현재 정렬 기준 전달
+        'query': query,  # 현재 검색어 전달
+    })
 
 
 
@@ -148,7 +168,7 @@ def delete_streamer_tier(request, pk):
 
 def update_streamer_tiers(request):
     if request.method != 'POST':
-        return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
+        return JsonResponse({"status": "error", "message": "올바른 요청이 아닙니다. 다시 시도해주세요."}, status=405)
     # 요청 제한 (캐시 키 생성)
     cache_key = f"update_tiers_{request.user.id}"
     if cache.get(cache_key):

@@ -36,7 +36,19 @@
               <a href="{% url 'summoner_tier' %}" class="btn btn-secondary">전적 검색으로 돌아가기</a>
           </div>
       </div>
-
+      <!-- 정렬 선택 메뉴 -->
+      <div class="mb-3">
+        <form method="get" class="form-inline">
+            <input type="hidden" name="q" value="{{ request.GET.q }}">
+            <label for="sort" class="mr-2">정렬:</label>
+            <select name="sort" id="sort" class="form-control mr-2">
+                <option value="alphabetical" {% if request.GET.sort == 'alphabetical' %}selected{% endif %}>이름순</option>
+                <option value="tier_desc" {% if request.GET.sort == 'tier_desc' %}selected{% endif %}>티어 높은 순</option>
+                <option value="tier_asc" {% if request.GET.sort == 'tier_asc' %}selected{% endif %}>티어 낮은 순</option>
+            </select>
+            <button type="submit" class="btn btn-primary">정렬 적용</button>
+        </form>
+      </div>
         <!-- 스트리머 티어 리스트 -->
         <table class="table table-bordered">
             <thead>
