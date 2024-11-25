@@ -1,4 +1,5 @@
 from django import forms
+from .models import StreamerTier
 
 class SummonerForm(forms.Form):
     game_name = forms.CharField(label='소환사명', max_length=30)
@@ -6,5 +7,7 @@ class SummonerForm(forms.Form):
 
 
 
-class StreamerForm(forms.Form):
-    streamer_name = forms.CharField(label='스트리머 닉네임', max_length=100, required=True)
+class StreamerForm(forms.ModelForm):
+    class Meta:
+        model = StreamerTier
+        fields = ['streamer_name']  # 스트리머 닉네임만 입력받음

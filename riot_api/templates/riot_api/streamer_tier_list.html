@@ -1,60 +1,55 @@
-<!-- <h1>스트리머 티어 리스트</h1>
-
-<table>
-    <tr>
-        <th>스트리머 닉네임</th>
-        <th>소환사명</th>
-        <th>티어</th>
-        <th>LP</th>
-        <th>승리</th>
-        <th>패배</th>
-        <th>업데이트 시간</th>
-    </tr>
-    {% for tier in streamer_tiers %}
-    <tr>
-        <td>{{ tier.streamer_name }}</td>
-        <td>{{ tier.summoner_name }}</td>
-        <td>{{ tier.tier }} {{ tier.rank }}</td>
-        <td>{{ tier.league_points }}</td>
-        <td>{{ tier.wins }}</td>
-        <td>{{ tier.losses }}</td>
-        <td>{{ tier.updated_at }}</td>
-    </tr>
-    {% endfor %}
-</table> -->
-
-<!-- riot_api/templates/riot_api/streamer_tier_list.html -->
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>스트리머 티어 리스트</title>
+    <title>스트리머 티어 목록</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    {% load static %}
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="mb-4 text-center">스트리머 티어 리스트</h1>
+        <h1 class="mb-4 text-center">스트리머 티어 목록</h1>
 
         <!-- 검색 폼 -->
-        <form method="get" action="{% url 'streamer_tier_list' %}" class="form-inline mb-3 justify-content-center">
-            <input name="q" class="form-control mr-sm-2" type="search" placeholder="스트리머 검색" aria-label="Search" value="{{ request.GET.q }}">
-            <button class="btn btn-outline-success" type="submit">검색</button>
+        <form method="get" class="form-inline mb-4">
+            <input type="text" name="q" class="form-control mr-2" placeholder="스트리머 이름 검색" value="{{ request.GET.q }}">
+            <button type="submit" class="btn btn-primary">검색</button>
         </form>
+        <div class="d-flex justify-content-between mb-3">
+          <div>
+            <form method="post" action="{% url 'update_streamer_tiers' %}" style="display:inline;" id="update-form">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-warning" id="update-button">업데이트</button>
+          </form>
+          <script>
+              document.getElementById('update-form').addEventListener('submit', function(e) {
+                  const button = document.getElementById('update-button');
+                  button.disabled = true;
+                  button.textContent = "업데이트 중...";
+              });
+          </script>
+          
+          
+          </div>
+          <div>
+              <a href="{% url 'post-list-create' %}" class="btn btn-secondary">리스트로 돌아가기</a>
+              <a href="{% url 'summoner_tier' %}" class="btn btn-secondary">전적 검색으로 돌아가기</a>
+          </div>
+      </div>
 
-        <table class="table table-bordered table-striped table-hover">
-            <thead class="thead-dark">
+        <!-- 스트리머 티어 리스트 -->
+        <table class="table table-bordered">
+            <thead>
                 <tr>
-                    <th>스트리머 닉네임</th>
-                    <th>소환사명</th>
+                    <th>스트리머 이름</th>
+                    <th>소환사 이름</th>
                     <th>티어</th>
+                    <th>랭크</th>
                     <th>LP</th>
                     <th>승리</th>
                     <th>패배</th>
-                    <th>승률</th>
-                    <th>업데이트 시간</th>
+                    <th>승률 (%)</th>
+                    <th>업데이트 날짜</th>
                 </tr>
             </thead>
             <tbody>
@@ -62,15 +57,25 @@
                 <tr>
                     <td>{{ tier.streamer_name }}</td>
                     <td>{{ tier.summoner_name }}</td>
-                    <td>
-                        <img src="{% static 'images/tiers/{{ tier.tier|lower }}.png' %}" alt="{{ tier.tier }}" width="32" height="32">
-                        {{ tier.tier }} {{ tier.rank }}
-                    </td>
+                    <td>{{ tier.tier }}</td>
+                    <td>{{ tier.rank }}</td>
                     <td>{{ tier.league_points }}</td>
                     <td>{{ tier.wins }}</td>
                     <td>{{ tier.losses }}</td>
-                    <td>{{ tier.win_rate|floatformat:2 }}%</td>
-                    <td>{{ tier.updated_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ tier.win_rate|floatformat:2 }}</td>
+                    <td>{{ tier.updated_at|date:"Y.m.d H:i" }}</td>
+                    {% if is_superuser %}
+        <td>
+            <form action="{% url 'delete_streamer_tier' tier.pk %}" method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm">삭제</button>
+            </form>
+        </td>
+        {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center">등록된 스트리머 티어가 없습니다.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -78,39 +83,43 @@
 
         <!-- 페이지네이션 -->
         <nav aria-label="Page navigation">
-          <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-              <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="Previous">
-                <span aria-hidden="true">&laquo;</span>
-              </a>
-            </li>
-            {% else %}
-            <li class="page-item disabled">
-              <span class="page-link" aria-hidden="true">&laquo;</span>
-            </li>
-            {% endif %}
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </span>
+                </li>
+                {% endif %}
 
-            {% for num in page_obj.paginator.page_range %}
-            {% if page_obj.number == num %}
-            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-            {% else %}
-            <li class="page-item"><a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a></li>
-            {% endif %}
-            {% endfor %}
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
 
-            {% if page_obj.has_next %}
-            <li class="page-item">
-              <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="Next">
-                <span aria-hidden="true">&raquo;</span>
-              </a>
-            </li>
-            {% else %}
-            <li class="page-item disabled">
-              <span class="page-link" aria-hidden="true">&raquo;</span>
-            </li>
-            {% endif %}
-          </ul>
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </span>
+                </li>
+                {% endif %}
+            </ul>
         </nav>
     </div>
 
@@ -120,7 +129,3 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
-
-
-
-

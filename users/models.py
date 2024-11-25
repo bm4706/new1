@@ -24,7 +24,7 @@ class UserManager(BaseUserManager):
             email=self.normalize_email(email), password=password, nickname=nickname
         )
 
-        user.is_admin = True
+        user.is_superuser = True
         user.is_staff = True
         user.is_active = True
         user.is_email_verified =True
@@ -39,7 +39,6 @@ class User(AbstractBaseUser,PermissionsMixin):
     nickname = models.CharField('닉네임', max_length=30, unique=True)
     # password = models.CharField('비밀번호', max_length=255)
     created_at = models.DateTimeField('회원가입일', auto_now_add=True)
-    is_admin = models.BooleanField('관리자 권한 여부', default=False)
     is_active = models.BooleanField('계정 활성화 여부', default=True)
     is_staff = models.BooleanField('스태브 여부', default=False)
     user_img = models.ImageField('프로필 이미지', upload_to='user/user_img/%Y/%m/%D', default='user_defalt.jpg',blank=True,null=True)

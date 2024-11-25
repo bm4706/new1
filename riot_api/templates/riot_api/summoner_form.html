@@ -3,4 +3,9 @@
   {% csrf_token %}
   {{ form.as_p }}
   <button type="submit">조회</button>
+  <div style="margin: 10px 0;">
+    <a href="{% url 'post-list-create' %}" style="padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; display: inline-block; margin-right: 10px;">리스트로 돌아가기</a>
+    <a href="{% url 'streamer_tier_list' %}" style="padding: 10px 20px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">스트리머 티어 목록으로 돌아가기</a>
+</div>
+
 </form>
